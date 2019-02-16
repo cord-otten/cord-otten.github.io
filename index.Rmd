@@ -1,0 +1,200 @@
+---
+title: "Film Prediction Showcase"
+author: "Cord Otten"
+date: "15 Februar 2019"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_section: true
+    theme: simplex
+editor_options: 
+  chunk_output_type: console
+---
+
+# Wikipedia Clicks Predict Box Office Performance
+
+Use publicly available search data to predict opening weekend box office 
+performance.
+
+## Strategy:  
+1) Identify films and box office performance from 
+[box office mojo](https://www.boxofficemojo.com/)  
+2) Retreive respective historical Wikipedia clicks  
+3) Build prediction model
+4) Setup prediction for upcoming movies
+
+# setup
+
+```{r load packages, echo = TRUE, warning = FALSE, message = FALSE}
+library(tidyverse)
+library(lubridate)
+library(urltools)
+library(rvest)
+library(jsonlite)
+library(pageviews)
+
+```
+
+## Data collection
+
+### Scrape data from boxofficemojo.com
+
+```{r scrape data from boxofficemojo.com, eval = FALSE, echo = TRUE}
+
+i <- 1 # page counter
+d <- NULL # initialize data
+
+# loop pages for film 2016 or newer
+repeat {
+  d <- "https://www.boxofficemojo.com/alltime/weekends/" %>%
+    param_set("sort", "widedate") %>%
+    param_set("order", "DESC") %>%
+    param_set("pagenum", i) %>%
+    read_html() %>%
+    html_node("td td td table") %>%
+    html_table() %>%
+    # first row are headings
+    set_names(slice(., 1)) %>%
+    slice(-1) %>%
+    transmute(
+      title = `Title (click to view)`,
+      opening = as.numeric(str_remove_all(`Opening*`, "\\$|[:punct:]")),
+      release = mdy(`Date**`)
+    ) %>%
+    bind_rows(d)
+  if(min(d$release) < ymd("2016-01-01")) {
+    break
+  }
+  i <- i + 1
+}
+
+d <-  filter(d, release >= ymd("2016-01-01"))
+
+rm(i)
+```
+
+### Identify wikipedia articles
+
+```{r wiki, eval = FALSE, echo = TRUE}
+
+d <- d %>%
+  pull(title) %>%
+  map_dfr(function(x, .pb = NULL) {
+    if (.pb$i < .pb$n) {
+      .pb$tick()$print()
+    }
+    list(
+      suffix = ifelse(
+        str_detect(x, "\\([:digit:]{4}\\)"),
+        str_replace(x, "(?<=\\([:digit:]{4})(?=\\))", " film"),
+        str_c(x, " (film)")),
+      plain = ifelse(
+        str_detect(x, "\\([:digit:]{4}\\)"),
+        str_remove(x, "[:space:]\\([:digit:]{4}\\)"),
+        x)
+    ) %>%
+      map_dfc(function(q) {
+        "https://en.wikipedia.org/w/api.php" %>%
+          param_set("action", "query") %>%
+          param_set("format", "json") %>%
+          param_set("list", "search") %>%
+          param_set("utf8", 1) %>%
+          param_set("srwhat", "nearmatch") %>%
+          param_set("srsearch", url_encode(q)) %>%
+          param_set("srinfo", "") %>%
+          param_set("srprop", "") %>%
+          fromJSON() %>%
+          purrr::pluck("query") %>%
+          purrr::pluck("search") %>%
+          (function(r) {
+            ifelse(is.null(r), NA, r$pageid)
+          })
+      })
+  }, .pb = progress_estimated(length(.))) %>%
+  bind_cols(d)
+
+pages <- d %>%
+  gather("q", "id", 1:2) %>%
+  filter(!is.na(id)) %>%
+  mutate(group = rep_len(seq(ceiling(nrow(.) / 50)), nrow(.)))
+
+d <- map_dfr(seq(max(pages$group)), function(i) {
+  pages %>%
+    filter(group == i) %>%
+    pull(id) %>%
+    (function(x) {
+      "https://en.wikipedia.org/w/api.php" %>%
+        param_set("action", "query") %>%
+        param_set("format", "json") %>%
+        param_set("prop", url_encode("info")) %>%
+        param_set("pageids", url_encode(str_c(x, collapse = "|"))) %>%
+        param_set("inprop", "url") %>%
+        fromJSON()
+    }) %>%
+    purrr::pluck("query") %>%
+    purrr::pluck("pages") %>%
+    map2_dfr(names(.), function(x, y) {
+      tibble(
+        id = as.integer(y),
+        url = x$fullurl,
+        main = is.null(x$redirect))
+    }) %>%
+    filter(main) %>%
+    select(-main)
+}) %>%
+  left_join(pages, by = "id") %>%
+  group_by(title) %>%
+  add_tally() %>%
+  ungroup() %>%
+  filter(!(n == 2 & q == "plain")) %>%
+  select(title, url) %>%
+  left_join(d, by = "title") %>%
+  select(-suffix, -plain)
+
+rm(pages)
+
+```
+
+### Retrieve Wikipedia page views
+
+```{r pageviews, eval = FALSE, echo = TRUE}
+
+d <- d %>%
+  mutate(
+    article = str_extract(url, "(?<=wiki/).*$"),
+    article = url_decode(article)) %>%
+  select(-url) %>%
+  filter(title != "Pokemon the Movie: The Power of Us")
+
+d <- d %>%
+  pull(article) %>%
+  map_dfr(function(article, .pb = NULL) {
+    if (.pb$i < .pb$n) {
+      .pb$tick()$print()
+    }
+    article_pageviews(
+      project = "en.wikipedia",
+      article = article,
+      start = ymd("2015-07-01"),
+      end = as.Date(Sys.Date() - 1)) %>%
+      mutate(article = article)
+  }, .pb = progress_estimated(length(.))
+  ) %>%
+  left_join(d, by = "article") %>%
+  select(title, release, opening, date, views)
+
+```
+
+
+```{r save data, eval = FALSE, echo = FALSE}
+saveRDS(d, "data/d.rds")
+```
+
+```{r load data, eval = TRUE, echo = FALSE}
+d <- readRDS("data/d.rds")
+```
+
+# Data exploration
+
+# Analysis
