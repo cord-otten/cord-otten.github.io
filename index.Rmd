@@ -1,7 +1,7 @@
 ---
 title: "Film Prediction Showcase"
 author: "Cord Otten"
-date: "15 Februar 2019"
+date: "Spring 2019"
 output:
   html_document:
     toc: true
@@ -24,7 +24,7 @@ performance.
 3) Build prediction model
 4) Setup prediction for upcoming movies
 
-# setup
+# Setup
 
 ```{r load packages, echo = TRUE, warning = FALSE, message = FALSE}
 library(tidyverse)
