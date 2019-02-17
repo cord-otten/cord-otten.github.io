@@ -33,6 +33,8 @@ library(urltools)
 library(rvest)
 library(jsonlite)
 library(pageviews)
+library(scales)
+library(knitr)
 
 ```
 
@@ -196,5 +198,72 @@ d <- readRDS("data/d.rds")
 ```
 
 # Data exploration
+
+```{r data wrangling, eval = TRUE, echo = TRUE}
+
+N <- d %>% select(title) %>% distinct() %>% nrow()
+
+```
+
+
+The sample consists of `r N`
+titles.
+
+```{r plot bo over time, eval = TRUE, echo = TRUE}
+
+d %>%
+  select(release, opening, title) %>%
+  distinct() %>%
+  ggplot(
+    aes(x = release, y = opening / 1e6)
+  ) +
+  geom_point() +
+  geom_text(
+    aes(label = ifelse(opening > 2e8, title, "")),
+    hjust = -0.1, vjust = 0,
+    alpha = .5) +
+  scale_y_continuous(
+    name = "Box Office Opening Weekend [in million $]",
+    labels = comma) +
+  labs(x = "Release Date") +
+  theme_bw()
+
+```
+
+```{r table with top movies, eval = TRUE, echo = TRUE}
+
+d %>%
+  select(title, release, opening) %>%
+  arrange(desc(opening)) %>%
+  distinct() %>%
+  top_n(10, opening) %>%
+  kable(
+    caption = str_c("Top 10 movies (sample size = ", N, ")"),
+    format.args = list(big.mark = ",")
+    )
+
+```
+
+```{r plot bo distribution, eval = TRUE, echo = TRUE}
+
+d %>%
+  select(title, release, opening) %>%
+  distinct() %>%
+  arrange(desc(opening)) %>%
+  mutate(rank = rank(desc(opening))) %>%
+  ggplot(aes(x = rank, y = opening / 1e6)) +
+  geom_col() +
+  scale_y_continuous(
+    name = "Box Office Opening Weekend [in million $]",
+    labels = comma) +
+  labs(x = "Films") +
+  theme_bw()
+
+```
+
+```{r plot bo wiki correlation, eval = TRUE, echo = TRUE}
+
+
+```
 
 # Analysis
