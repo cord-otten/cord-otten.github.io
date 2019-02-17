@@ -17,7 +17,6 @@ editor_options:
 Use publicly available search data to predict opening weekend box office 
 performance.
 
-## Strategy:  
 1) Identify films and box office performance from 
 [box office mojo](https://www.boxofficemojo.com/)  
 2) Retreive respective historical Wikipedia clicks  
