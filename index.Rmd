@@ -341,7 +341,7 @@ d %>%
 ```
 
 
-```{r plot bo wiki correlation, eval = TRUE, echo = TRUE}
+```{r plot bo wiki correlation, eval = TRUE, echo = TRUE, fig.height = 10}
 
 da %>%
   gather(
