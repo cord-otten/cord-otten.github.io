@@ -200,13 +200,34 @@ d <- readRDS("data/d.rds")
 
 ```{r data wrangling, eval = TRUE, echo = TRUE}
 
-N <- d %>% select(title) %>% distinct() %>% nrow()
+d <- d %>%
+  arrange(desc(opening)) %>%
+  mutate(
+    title = as_factor(title),
+    date = as.Date(date),
+    t = date - release
+  )
+
+da <- d %>%
+  select(title, release, opening) %>%
+  distinct()
+
+da <- c(7, 14, 30, 90, 180, 365) %>%
+  reduce(
+    function(df, ds) {
+      d %>%
+        filter(t < -ds) %>%
+        group_by(title) %>%
+        summarise(!!str_c("v", str_pad(ds, 3, "left", 0)) := sum(views)) %>%
+        right_join(df, by = "title") 
+    },
+    .init = da
+  )
 
 ```
 
 
-The sample consists of `r N`
-titles.
+The sample consists of `r nrow(da)` titles.
 
 ```{r plot bo over time, eval = TRUE, echo = TRUE}
 
@@ -218,13 +239,28 @@ d %>%
   ) +
   geom_point() +
   geom_text(
-    aes(label = ifelse(opening > 2e8, title, "")),
+    aes(label = ifelse(opening > 2e8, levels(title)[title], "")),
     hjust = -0.1, vjust = 0,
     alpha = .5) +
   scale_y_continuous(
     name = "Box Office Opening Weekend [in million $]",
     labels = comma) +
   labs(x = "Release Date") +
+  theme_bw()
+
+```
+
+```{r plot seasonality, eval = TRUE, echo = TRUE}
+
+da %>%
+  mutate(
+    week = week(release)
+  ) %>%
+  ggplot(aes(x = week, y = opening / 1e6)) +
+  geom_point(alpha = .5) +
+  scale_y_continuous(
+    name = "Box Office Opening Weekend [in million $]",
+    labels = comma) +
   theme_bw()
 
 ```
@@ -237,7 +273,7 @@ d %>%
   distinct() %>%
   top_n(10, opening) %>%
   kable(
-    caption = str_c("Top 10 movies (sample size = ", N, ")"),
+    caption = str_c("Top 10 movies (sample size = ", nrow(da), ")"),
     format.args = list(big.mark = ",")
     )
 
@@ -248,9 +284,7 @@ d %>%
 d %>%
   select(title, release, opening) %>%
   distinct() %>%
-  arrange(desc(opening)) %>%
-  mutate(rank = rank(desc(opening))) %>%
-  ggplot(aes(x = rank, y = opening / 1e6)) +
+  ggplot(aes(x = as.numeric(title), y = opening / 1e6)) +
   geom_col() +
   scale_y_continuous(
     name = "Box Office Opening Weekend [in million $]",
@@ -260,9 +294,83 @@ d %>%
 
 ```
 
-```{r plot bo wiki correlation, eval = TRUE, echo = TRUE}
+```{r plot clicks over time, eval = TRUE, echo = TRUE}
 
+d %>%
+  filter(
+    abs(t) < 366
+  ) %>%
+  ggplot(
+    aes(x = t, y = views / 1e6, group = title)
+  ) +
+  geom_line(alpha = .1) +
+  scale_x_continuous(name = "Days since release") +
+  scale_y_continuous(name = "Wikipedia clicks [in million]") +
+  theme_bw()
 
 ```
+
+```{r available clicks prior to release, eval = TRUE, echo = TRUE}
+
+d %>%
+  group_by(title) %>%
+  summarise(t = min(t)) %>%
+  arrange(desc(t)) %>%
+  top_n(10, t) %>%
+  kable(
+    caption = str_c(
+      "10 movies with the latest Wikipedia pages",
+      " (sample size = ", nrow(da),")"
+      ),
+    format.args = list(big.mark = ",")
+    )
+  
+d %>%
+  group_by(title) %>%
+  summarise(t = min(t)) %>%
+  arrange(t) %>%
+  mutate(cumulative = seq(n())/n()) %>%
+  ggplot(aes(x = t, y = cumulative)) +
+  geom_line() +
+  scale_x_continuous(name = "Days since release") +
+  scale_y_continuous(
+    name = str_c("Available titles (sample size = ", nrow(da), ")"),
+    labels = percent) +
+  theme_bw()
+
+```
+
+
+```{r plot bo wiki correlation, eval = TRUE, echo = TRUE}
+
+da %>%
+  gather(
+    tPredict, views, starts_with("v")
+  ) %>%
+  group_by(tPredict) %>%
+  summarise(
+    N = sum(!is.na(views)),
+    correlation = cor(views, opening, "pairwise.complete.obs")) %>%
+  mutate(tPredict = as.numeric(str_extract(tPredict, "[:digit:]{3}"))) %>%
+  rename(`days prior to release` = tPredict) %>%
+  kable(caption = "Available titles and correlations for prediction groups")
+
+da %>%
+  gather(
+    tPredict, views, starts_with("v")
+  ) %>% 
+  filter(!is.na(views)) %>%
+  ggplot(aes(x = views / 1e6, y = opening / 1e6)) +
+  geom_point() +
+  facet_wrap(vars(tPredict), ncol = 2) +
+  scale_x_continuous(name = "Wikipedia clicks [in million]") +
+  scale_y_continuous(
+    name = "Box Office Opening Weekend [in million $]",
+    labels = comma) +
+  geom_smooth(method = "lm", se = F) +
+  theme_bw()
+
+```
+
 
 # Analysis
