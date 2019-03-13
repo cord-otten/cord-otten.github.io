@@ -10,6 +10,55 @@ output:
     theme: simplex
 editor_options: 
   chunk_output_type: console
+references:
+- id: rossiInvitedPaperEven2014
+  type: article-journal
+  title: >-
+    Invited Paperâ€”Even the Rich Can Make Themselves Poor: A Critical Examination
+    of IV Methods in Marketing Applications
+  container-title: Marketing Science
+  page: 655-672
+  volume: '33'
+  issue: '5'
+  source: pubsonline.informs.org (Atypon)
+  abstract: >-
+    Marketing is a field that is rich in data. Our data is of high quality,
+    often at a highly disaggregate level, and there is considerable variation in
+    the key variables for which estimates of effects on outcomes such as sales
+    and profits are desired. The recognition that, in some general sense,
+    marketing variables are set by firms on the basis of information not always
+    observable by the researcher has led to concerns regarding endogeneity and
+    widespread pressure to implement instrumental variables methods in marketing
+    problems. The instruments used in our empirical literature are rarely valid
+    and the IV methods used can have poor sampling properties, including
+    substantial finite sample bias and large sampling errors. Given the problems
+    with IV methods, a convincing argument must be made that there is a first
+    order endogeneity problem and that we have strong and valid instruments
+    before these methods should be used. If strong and valid instruments are not
+    available, then researchers need to look toward supplementing the
+    information available to them. For example, if there are concerns about
+    unobservable advertising or promotional variables, then the researcher is
+    much better off measuring these variables rather than using instruments
+    (such as lagged marketing variables) that are clearly invalid. Ultimately,
+    only randomized variation in marketing variables (with proper implementation
+    and large samples) can be argued to be a valid instrument without further
+    assumptions.
+  URL: 'http://pubsonline.informs.org/doi/abs/10.1287/mksc.2014.0860'
+  DOI: 10.1287/mksc.2014.0860
+  ISSN: 0732-2399
+  author:
+    - family: Rossi
+      given: Peter E.
+  issued:
+    - year: 2014
+      month: 7
+      day: 1
+  accessed:
+    - year: 2017
+      month: 4
+      day: 25
+  title-short: Invited Paperâ€”Even the Rich Can Make Themselves Poor
+  container-title-short: Marketing Science
 ---
 
 # Wikipedia Clicks Predict Box Office Performance
@@ -22,6 +71,19 @@ performance.
 2) Retreive respective historical Wikipedia clicks  
 3) Build prediction model
 4) Setup prediction for upcoming movies
+
+```{r, echo = FALSE}
+
+DiagrammeR::grViz("
+digraph dag {
+node [shape = box]
+'Consumer Interest' -> 'Box Office'
+'Consumer Interest' -> 'Wikipedia Views'
+}")
+
+```
+
+This is a prediction task [@rossiInvitedPaperEven2014].
 
 # Setup
 
@@ -37,9 +99,9 @@ library(knitr)
 
 ```
 
-## Data collection
+# Data collection
 
-### Scrape data from boxofficemojo.com
+## Scrape data from boxofficemojo.com
 
 ```{r scrape data from boxofficemojo.com, eval = FALSE, echo = TRUE}
 
@@ -75,7 +137,7 @@ d <-  filter(d, release >= ymd("2016-01-01"))
 rm(i)
 ```
 
-### Identify wikipedia articles
+## Identify wikipedia articles
 
 ```{r wiki, eval = FALSE, echo = TRUE}
 
@@ -157,7 +219,7 @@ rm(pages)
 
 ```
 
-### Retrieve Wikipedia page views
+## Retrieve Wikipedia page views
 
 ```{r pageviews, eval = FALSE, echo = TRUE}
 
@@ -237,7 +299,7 @@ d %>%
   ggplot(
     aes(x = release, y = opening / 1e6)
   ) +
-  geom_point() +
+  geom_point(alpha = .3) +
   geom_text(
     aes(label = ifelse(opening > 2e8, levels(title)[title], "")),
     hjust = -0.1, vjust = 0,
@@ -257,7 +319,7 @@ da %>%
     week = week(release)
   ) %>%
   ggplot(aes(x = week, y = opening / 1e6)) +
-  geom_point(alpha = .5) +
+  geom_point(alpha = .3) +
   scale_y_continuous(
     name = "Box Office Opening Weekend [in million $]",
     labels = comma) +
@@ -285,7 +347,7 @@ d %>%
   select(title, release, opening) %>%
   distinct() %>%
   ggplot(aes(x = as.numeric(title), y = opening / 1e6)) +
-  geom_col() +
+  geom_area() +
   scale_y_continuous(
     name = "Box Office Opening Weekend [in million $]",
     labels = comma) +
@@ -300,9 +362,7 @@ d %>%
   filter(
     abs(t) < 366
   ) %>%
-  ggplot(
-    aes(x = t, y = views / 1e6, group = title)
-  ) +
+  ggplot(aes(x = t, y = views / 1e6, group = title)) +
   geom_line(alpha = .1) +
   scale_x_continuous(name = "Days since release") +
   scale_y_continuous(name = "Wikipedia clicks [in million]") +
@@ -361,7 +421,7 @@ da %>%
   ) %>% 
   filter(!is.na(views)) %>%
   ggplot(aes(x = views / 1e6, y = opening / 1e6)) +
-  geom_point() +
+  geom_point(alpha = .2) +
   facet_wrap(vars(tPredict), ncol = 2) +
   scale_x_continuous(name = "Wikipedia clicks [in million]") +
   scale_y_continuous(
@@ -374,3 +434,68 @@ da %>%
 
 
 # Analysis
+
+
+
+$$opening \sim Poisson(\lambda)$$
+$$log(\lambda) = a_{i}$$
+$$a_{i} \sim Normal(\bar{a}, \sigma)$$
+$$\bar{a} \sim Normal(16, 1)$$
+$$sigma \sim Exponential(10)$$
+
+```{r priors}
+
+da %>%
+  ggplot(
+    aes(x = opening)) +
+  geom_density(aes(linetype = "data")) +
+  stat_function(
+    aes(linetype = "prior"),
+    fun = function(x) {dlnorm(x, 18, 1.5)}) +
+  scale_x_continuous(
+    labels = comma) +
+  scale_y_continuous(
+    breaks = NULL,
+    labels = NULL) +
+  scale_linetype_manual(values = c(3,1)) +
+  theme_bw()
+
+```
+
+
+
+```{stan output.var="m01", eval = FALSE}
+
+data{
+    int opening[454];
+    int title[454];
+}
+parameters{
+    vector[454] aTitle;
+    real aBar;
+    real<lower=0> sigma;
+}
+model{
+    vector[454] lambda;
+    sigma ~ exponential(1);
+    aBar ~ normal(16 ,1.5);
+    aTitle ~ normal(aBar ,sigma);
+    for (i in 1:454) {
+        lambda[i] = aTitle[title[i]];
+        lambda[i] = exp(lambda[i]);
+    }
+    opening ~ poisson( lambda );
+}
+generated quantities{
+    vector[454] log_lik;
+    vector[454] lambda;
+    for (i in 1:454) {
+        lambda[i] = aTitle[title[i]];
+        lambda[i] = exp(lambda[i]);
+    }
+    for (i in 1:454) log_lik[i] = poisson_lpmf(opening[i] | lambda[i]);
+}
+
+```
+
+# References
