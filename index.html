@@ -3596,9 +3596,7 @@ h6 {
 </style>
 
 
-</head>
 
-<body>
 
 <style type="text/css">
 .main-container {
@@ -3623,21 +3621,82 @@ img {
 button.code-folding-btn:focus {
   outline: none;
 }
+summary {
+  display: list-item;
+}
 </style>
 
 
 
-<div class="container-fluid main-container">
-
 <!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
 <script>
 $(document).ready(function () {
   window.buildTabsets("TOC");
 });
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
 </script>
 
 <!-- code folding -->
-
 
 
 
@@ -3726,6 +3785,16 @@ div.tocify {
 
 </style>
 
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
 <!-- setup 3col/9col grid for toc_float and main content  -->
 <div class="row-fluid">
 <div class="col-xs-12 col-sm-4 col-md-3">
@@ -3743,8 +3812,8 @@ div.tocify {
 
 
 <h1 class="title toc-ignore">Film Prediction Showcase</h1>
-<h4 class="author"><em>Cord Otten</em></h4>
-<h4 class="date"><em>Spring 2019</em></h4>
+<h4 class="author">Cord Otten</h4>
+<h4 class="date">Spring 2019</h4>
 
 </div>
 
@@ -3760,9 +3829,9 @@ div.tocify {
 <li>Build prediction model</li>
 <li>Setup prediction for upcoming movies</li>
 </ol>
-<div id="htmlwidget-b6f4531cec07e217302c" style="width:672px;height:480px;" class="grViz html-widget"></div>
-<script type="application/json" data-for="htmlwidget-b6f4531cec07e217302c">{"x":{"diagram":"\ndigraph dag {\nnode [shape = box]\n\"Consumer Interest\" -> \"Box Office\"\n\"Consumer Interest\" -> \"Wikipedia Views\"\n}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
-<p>This is a prediction task <span class="citation">(Rossi 2014)</span>.</p>
+<div id="htmlwidget-0c32e5cbe0d09d709b85" style="width:672px;height:480px;" class="grViz html-widget"></div>
+<script type="application/json" data-for="htmlwidget-0c32e5cbe0d09d709b85">{"x":{"diagram":"\ndigraph dag {\nnode [shape = box]\n\"Consumer Interest\" -> \"Box Office\"\n\"Consumer Interest\" -> \"Wikipedia Views\"\n}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
+<p>This is a prediction task <span class="citation">(Rossi, <a href="#ref-rossi2014ms">2014</a>)</span>.</p>
 </div>
 <div id="setup" class="section level1">
 <h1><span class="header-section-number">2</span> Setup</h1>
@@ -4208,6 +4277,7 @@ da &lt;- c(7, 14, 30, 90, 180, 365) %&gt;%
 </div>
 <div id="analysis" class="section level1">
 <h1><span class="header-section-number">5</span> Analysis</h1>
+<p>I highly recommend the book <em>Statistical Rethinking</em> by <span class="citation">McElreath (<a href="#ref-mcelreath2018">2018</a>)</span>.</p>
 <p><span class="math display">\[opening \sim Poisson(\lambda)\]</span> <span class="math display">\[log(\lambda) = a_{i}\]</span> <span class="math display">\[a_{i} \sim Normal(\bar{a}, \sigma)\]</span> <span class="math display">\[\bar{a} \sim Normal(16, 1)\]</span> <span class="math display">\[sigma \sim Exponential(10)\]</span></p>
 <pre class="r"><code>da %&gt;%
   ggplot(
@@ -4259,8 +4329,11 @@ generated quantities{
 <div id="references" class="section level1 unnumbered">
 <h1>References</h1>
 <div id="refs" class="references">
-<div id="ref-rossiInvitedPaperEven2014">
-<p>Rossi, Peter E. 2014. “Invited Paperâ€”Even the Rich Can Make Themselves Poor: A Critical Examination of IV Methods in Marketing Applications.” <em>Marketing Science</em> 33 (5):655–72. <a href="https://doi.org/10.1287/mksc.2014.0860" class="uri">https://doi.org/10.1287/mksc.2014.0860</a>.</p>
+<div id="ref-mcelreath2018">
+<p>McElreath, R. (2018). <em>Statistical Rethinking: A Bayesian Course with Examples in R and Stan</em> (1st ed.). Chapman and Hall/CRC.</p>
+</div>
+<div id="ref-rossi2014ms">
+<p>Rossi, P. E. (2014). Invited Paper the Rich Can Make Themselves Poor: A Critical Examination of IV Methods in Marketing Applications. <em>Marketing Science</em>, <em>33</em>(5), 655–672. <a href="https://doi.org/10.1287/mksc.2014.0860" class="uri">https://doi.org/10.1287/mksc.2014.0860</a></p>
 </div>
 </div>
 </div>
