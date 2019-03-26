@@ -15,6 +15,10 @@ link-citations: true
 csl: apa.csl
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = T)
+```
+
 # Wikipedia Clicks Predict Box Office Performance
 
 Use publicly available search data to predict opening weekend box office 
@@ -27,6 +31,8 @@ performance.
 4) Setup prediction for upcoming movies
 
 ```{r, echo = FALSE}
+
+knitr::opts_chunk$set(echo = T)
 
 DiagrammeR::grViz("
 digraph dag {
@@ -41,7 +47,7 @@ This is a prediction task [@rossi2014ms].
 
 # Setup
 
-```{r load packages, echo = TRUE, warning = FALSE, message = FALSE}
+```{r load packages, warning = FALSE, message = FALSE}
 library(tidyverse)
 library(lubridate)
 library(urltools)
@@ -50,6 +56,7 @@ library(jsonlite)
 library(pageviews)
 library(scales)
 library(knitr)
+library(kableExtra)
 
 ```
 
@@ -57,7 +64,7 @@ library(knitr)
 
 ## Scrape data from boxofficemojo.com
 
-```{r scrape data from boxofficemojo.com, eval = FALSE, echo = TRUE}
+```{r scrape data from boxofficemojo.com, eval = FALSE}
 
 i <- 1 # page counter
 d <- NULL # initialize data
@@ -93,9 +100,9 @@ rm(i)
 
 ## Identify wikipedia articles
 
-```{r wiki, eval = FALSE, echo = TRUE}
+```{r wiki, eval = FALSE}
 
-d <- d %>%
+d %>%
   pull(title) %>%
   map_dfr(function(x, .pb = NULL) {
     if (.pb$i < .pb$n) {
@@ -129,14 +136,14 @@ d <- d %>%
           })
       })
   }, .pb = progress_estimated(length(.))) %>%
-  bind_cols(d)
+  bind_cols(d) -> d
 
 pages <- d %>%
   gather("q", "id", 1:2) %>%
   filter(!is.na(id)) %>%
   mutate(group = rep_len(seq(ceiling(nrow(.) / 50)), nrow(.)))
 
-d <- map_dfr(seq(max(pages$group)), function(i) {
+map_dfr(seq(max(pages$group)), function(i) {
   pages %>%
     filter(group == i) %>%
     pull(id) %>%
@@ -167,7 +174,9 @@ d <- map_dfr(seq(max(pages$group)), function(i) {
   filter(!(n == 2 & q == "plain")) %>%
   select(title, url) %>%
   left_join(d, by = "title") %>%
-  select(-suffix, -plain)
+  select(
+    -suffix, -plain
+  ) -> d
 
 rm(pages)
 
@@ -175,16 +184,18 @@ rm(pages)
 
 ## Retrieve Wikipedia page views
 
-```{r pageviews, eval = FALSE, echo = TRUE}
+```{r pageviews, eval = FALSE}
 
-d <- d %>%
+d %>%
   mutate(
     article = str_extract(url, "(?<=wiki/).*$"),
     article = url_decode(article)) %>%
   select(-url) %>%
-  filter(title != "Pokemon the Movie: The Power of Us")
+  filter(
+    title != "Pokemon the Movie: The Power of Us"
+    ) -> d
 
-d <- d %>%
+d %>%
   pull(article) %>%
   map_dfr(function(article, .pb = NULL) {
     if (.pb$i < .pb$n) {
@@ -199,7 +210,9 @@ d <- d %>%
   }, .pb = progress_estimated(length(.))
   ) %>%
   left_join(d, by = "article") %>%
-  select(title, release, opening, date, views)
+  select(
+    title, release, opening, date, views
+    ) -> d
 
 ```
 
@@ -214,21 +227,21 @@ d <- readRDS("data/d.rds")
 
 # Data exploration
 
-```{r data wrangling, eval = TRUE, echo = TRUE}
+```{r data wrangling, eval = TRUE}
 
-d <- d %>%
+d %>%
   arrange(desc(opening)) %>%
   mutate(
     title = as_factor(title),
     date = as.Date(date),
     t = date - release
-  )
+  ) -> d
 
-da <- d %>%
+d %>%
   select(title, release, opening) %>%
-  distinct()
+  distinct() -> da
 
-da <- c(7, 14, 30, 90, 180, 365) %>%
+c(7, 14, 30, 90, 180, 365) %>%
   reduce(
     function(df, ds) {
       d %>%
@@ -238,14 +251,13 @@ da <- c(7, 14, 30, 90, 180, 365) %>%
         right_join(df, by = "title") 
     },
     .init = da
-  )
+  ) -> da
 
 ```
 
-
 The sample consists of `r nrow(da)` titles.
 
-```{r plot bo over time, eval = TRUE, echo = TRUE}
+```{r plot bo over time, eval = TRUE}
 
 d %>%
   select(release, opening, title) %>%
@@ -266,7 +278,7 @@ d %>%
 
 ```
 
-```{r plot seasonality, eval = TRUE, echo = TRUE}
+```{r plot seasonality, eval = TRUE}
 
 da %>%
   mutate(
@@ -281,21 +293,24 @@ da %>%
 
 ```
 
-```{r table with top movies, eval = TRUE, echo = TRUE}
+```{r table with top movies, eval = TRUE}
 
-d %>%
-  select(title, release, opening) %>%
+da %>%
   arrange(desc(opening)) %>%
-  distinct() %>%
+  mutate(top = seq(nrow(.))) %>%
   top_n(10, opening) %>%
+  select(top, title, release, opening) %>%
   kable(
     caption = str_c("Top 10 movies (sample size = ", nrow(da), ")"),
     format.args = list(big.mark = ",")
-    )
+  ) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = F)
 
 ```
 
-```{r plot bo distribution, eval = TRUE, echo = TRUE}
+```{r plot bo distribution, eval = TRUE}
 
 d %>%
   select(title, release, opening) %>%
@@ -310,7 +325,7 @@ d %>%
 
 ```
 
-```{r plot clicks over time, eval = TRUE, echo = TRUE}
+```{r plot clicks over time, eval = TRUE}
 
 d %>%
   filter(
@@ -324,7 +339,7 @@ d %>%
 
 ```
 
-```{r available clicks prior to release, eval = TRUE, echo = TRUE}
+```{r available clicks prior to release, eval = TRUE}
 
 d %>%
   group_by(title) %>%
@@ -337,15 +352,17 @@ d %>%
       " (sample size = ", nrow(da),")"
       ),
     format.args = list(big.mark = ",")
-    )
+    ) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = F)
   
 d %>%
   group_by(title) %>%
   summarise(t = min(t)) %>%
-  arrange(t) %>%
-  mutate(cumulative = seq(n())/n()) %>%
-  ggplot(aes(x = t, y = cumulative)) +
-  geom_line() +
+  ggplot(aes(x = t)) +
+  stat_ecdf(geom = "step") +
+  geom_vline(xintercept = 0) +
   scale_x_continuous(name = "Days since release") +
   scale_y_continuous(
     name = str_c("Available titles (sample size = ", nrow(da), ")"),
@@ -354,8 +371,7 @@ d %>%
 
 ```
 
-
-```{r plot bo wiki correlation, eval = TRUE, echo = TRUE, fig.height = 10}
+```{r plot bo wiki correlation, eval = TRUE, fig.height = 10}
 
 da %>%
   gather(
@@ -367,7 +383,10 @@ da %>%
     correlation = cor(views, opening, "pairwise.complete.obs")) %>%
   mutate(tPredict = as.numeric(str_extract(tPredict, "[:digit:]{3}"))) %>%
   rename(`days prior to release` = tPredict) %>%
-  kable(caption = "Available titles and correlations for prediction groups")
+  kable(caption = "Available titles and correlations for prediction groups") %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = F)
 
 da %>%
   gather(
@@ -386,18 +405,30 @@ da %>%
 
 ```
 
-
 # Analysis
 
-I highly recommend the book *Statistical Rethinking* by @mcelreath2018. 
+I highly recommend the book *Statistical Rethinking* by @mcelreath2018.  
 
-$$opening \sim Poisson(\lambda)$$
-$$log(\lambda) = a_{i}$$
-$$a_{i} \sim Normal(\bar{a}, \sigma)$$
-$$\bar{a} \sim Normal(16, 1)$$
-$$sigma \sim Exponential(10)$$
+## Standardization
 
-```{r priors}
+```{r}
+
+d %>%
+  mutate(
+    viewsS = scale(views)
+  ) -> d
+
+```
+
+## Gamma-Poisson model
+
+$$opening \sim GammaPoisson(\lambda, \gamma)$$
+$$log(\lambda) = a + \beta VIEWS$$
+## Priors
+
+### Constant
+
+```{r prior alpha}
 
 da %>%
   ggplot(
@@ -415,6 +446,29 @@ da %>%
   theme_bw()
 
 ```
+
+### Slope
+
+```{r prior beta}
+
+da %>%
+  ggplot() +
+  stat_function(fun = function(x) {dnorm(x, 0, 1)}) +
+  scale_x_continuous(
+    limits = c(-3, 3),
+    labels = comma) +
+  scale_y_continuous(
+    breaks = NULL,
+    labels = NULL) +
+  theme_bw()
+
+```
+
+### Overdispersion
+
+
+$$a \sim LogNormal(0, 1)$$
+$$\gamma \sim Exponential(10)$$
 
 
 
