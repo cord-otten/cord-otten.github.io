@@ -1,7 +1,7 @@
 --- 
 title: "base"
 author: "Cord Otten"
-date: "`r Sys.Date()`"
+date: "2020-05-25"
 site: bookdown::bookdown_site
 documentclass: book
 description: "Minimal Example"
