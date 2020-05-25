@@ -7,7 +7,446 @@ documentclass: book
 description: "Minimal Example"
 ---
 
+<<<<<<< HEAD
 # Prerequisites
+=======
+# Wikipedia Clicks Predict Box Office Performance
+
+Use publicly available search data to predict opening weekend box office 
+performance.
+
+1) Identify films and box office performance from 
+[box office mojo](https://www.boxofficemojo.com/)  
+2) Retreive respective historical Wikipedia clicks  
+3) Build prediction model
+4) Setup prediction for upcoming movies
+
+```{r, echo = FALSE}
+
+DiagrammeR::grViz("
+digraph dag {
+node [shape = box]
+'Consumer Interest' -> 'Box Office'
+'Consumer Interest' -> 'Wikipedia Views'
+}")
+
+```
+
+This is a prediction task [@rossi2014ms].
+
+# Setup
+
+```{r load packages, echo = TRUE, warning = FALSE, message = FALSE}
+library(tidyverse)
+library(lubridate)
+library(urltools)
+library(rvest)
+library(jsonlite)
+library(pageviews)
+library(scales)
+library(knitr)
+
+```
+
+# Data collection
+
+## Scrape data from boxofficemojo.com
+
+```{r scrape data from boxofficemojo.com, eval = FALSE, echo = TRUE}
+
+i <- 1 # page counter
+d <- NULL # initialize data
+
+# loop pages for film 2016 or newer
+repeat {
+  d <- "https://www.boxofficemojo.com/alltime/weekends/" %>%
+    param_set("sort", "widedate") %>%
+    param_set("order", "DESC") %>%
+    param_set("pagenum", i) %>%
+    read_html() %>%
+    html_node("td td td table") %>%
+    html_table() %>%
+    # first row are headings
+    set_names(slice(., 1)) %>%
+    slice(-1) %>%
+    transmute(
+      title = `Title (click to view)`,
+      opening = as.numeric(str_remove_all(`Opening*`, "\\$|[:punct:]")),
+      release = mdy(`Date**`)
+    ) %>%
+    bind_rows(d)
+  if(min(d$release) < ymd("2016-01-01")) {
+    break
+  }
+  i <- i + 1
+}
+
+d <-  filter(d, release >= ymd("2016-01-01"))
+
+rm(i)
+```
+
+## Identify wikipedia articles
+
+```{r wiki, eval = FALSE, echo = TRUE}
+
+d <- d %>%
+  pull(title) %>%
+  map_dfr(function(x, .pb = NULL) {
+    if (.pb$i < .pb$n) {
+      .pb$tick()$print()
+    }
+    list(
+      suffix = ifelse(
+        str_detect(x, "\\([:digit:]{4}\\)"),
+        str_replace(x, "(?<=\\([:digit:]{4})(?=\\))", " film"),
+        str_c(x, " (film)")),
+      plain = ifelse(
+        str_detect(x, "\\([:digit:]{4}\\)"),
+        str_remove(x, "[:space:]\\([:digit:]{4}\\)"),
+        x)
+    ) %>%
+      map_dfc(function(q) {
+        "https://en.wikipedia.org/w/api.php" %>%
+          param_set("action", "query") %>%
+          param_set("format", "json") %>%
+          param_set("list", "search") %>%
+          param_set("utf8", 1) %>%
+          param_set("srwhat", "nearmatch") %>%
+          param_set("srsearch", url_encode(q)) %>%
+          param_set("srinfo", "") %>%
+          param_set("srprop", "") %>%
+          fromJSON() %>%
+          purrr::pluck("query") %>%
+          purrr::pluck("search") %>%
+          (function(r) {
+            ifelse(is.null(r), NA, r$pageid)
+          })
+      })
+  }, .pb = progress_estimated(length(.))) %>%
+  bind_cols(d)
+
+pages <- d %>%
+  gather("q", "id", 1:2) %>%
+  filter(!is.na(id)) %>%
+  mutate(group = rep_len(seq(ceiling(nrow(.) / 50)), nrow(.)))
+
+d <- map_dfr(seq(max(pages$group)), function(i) {
+  pages %>%
+    filter(group == i) %>%
+    pull(id) %>%
+    (function(x) {
+      "https://en.wikipedia.org/w/api.php" %>%
+        param_set("action", "query") %>%
+        param_set("format", "json") %>%
+        param_set("prop", url_encode("info")) %>%
+        param_set("pageids", url_encode(str_c(x, collapse = "|"))) %>%
+        param_set("inprop", "url") %>%
+        fromJSON()
+    }) %>%
+    purrr::pluck("query") %>%
+    purrr::pluck("pages") %>%
+    map2_dfr(names(.), function(x, y) {
+      tibble(
+        id = as.integer(y),
+        url = x$fullurl,
+        main = is.null(x$redirect))
+    }) %>%
+    filter(main) %>%
+    select(-main)
+}) %>%
+  left_join(pages, by = "id") %>%
+  group_by(title) %>%
+  add_tally() %>%
+  ungroup() %>%
+  filter(!(n == 2 & q == "plain")) %>%
+  select(title, url) %>%
+  left_join(d, by = "title") %>%
+  select(-suffix, -plain)
+
+rm(pages)
+
+```
+
+## Retrieve Wikipedia page views
+
+```{r pageviews, eval = FALSE, echo = TRUE}
+
+d <- d %>%
+  mutate(
+    article = str_extract(url, "(?<=wiki/).*$"),
+    article = url_decode(article)) %>%
+  select(-url) %>%
+  filter(title != "Pokemon the Movie: The Power of Us")
+
+d <- d %>%
+  pull(article) %>%
+  map_dfr(function(article, .pb = NULL) {
+    if (.pb$i < .pb$n) {
+      .pb$tick()$print()
+    }
+    article_pageviews(
+      project = "en.wikipedia",
+      article = article,
+      start = ymd("2015-07-01"),
+      end = as.Date(Sys.Date() - 1)) %>%
+      mutate(article = article)
+  }, .pb = progress_estimated(length(.))
+  ) %>%
+  left_join(d, by = "article") %>%
+  select(title, release, opening, date, views)
+
+```
+
+
+```{r save data, eval = FALSE, echo = FALSE}
+saveRDS(d, "data/d.rds")
+```
+
+```{r load data, eval = TRUE, echo = FALSE}
+d <- readRDS("data/d.rds")
+```
+
+# Data exploration
+
+```{r data wrangling, eval = TRUE, echo = TRUE}
+
+d <- d %>%
+  arrange(desc(opening)) %>%
+  mutate(
+    title = as_factor(title),
+    date = as.Date(date),
+    t = date - release
+  )
+
+da <- d %>%
+  select(title, release, opening) %>%
+  distinct()
+
+da <- c(7, 14, 30, 90, 180, 365) %>%
+  reduce(
+    function(df, ds) {
+      d %>%
+        filter(t < -ds) %>%
+        group_by(title) %>%
+        summarise(!!str_c("v", str_pad(ds, 3, "left", 0)) := sum(views)) %>%
+        right_join(df, by = "title") 
+    },
+    .init = da
+  )
+
+```
+
+
+The sample consists of `r nrow(da)` titles.
+
+```{r plot bo over time, eval = TRUE, echo = TRUE}
+
+d %>%
+  select(release, opening, title) %>%
+  distinct() %>%
+  ggplot(
+    aes(x = release, y = opening / 1e6)
+  ) +
+  geom_point(alpha = .3) +
+  geom_text(
+    aes(label = ifelse(opening > 2e8, levels(title)[title], "")),
+    hjust = -0.1, vjust = 0,
+    alpha = .5) +
+  scale_y_continuous(
+    name = "Box Office Opening Weekend [in million $]",
+    labels = comma) +
+  labs(x = "Release Date") +
+  theme_bw()
+
+```
+
+```{r plot seasonality, eval = TRUE, echo = TRUE}
+
+da %>%
+  mutate(
+    week = week(release)
+  ) %>%
+  ggplot(aes(x = week, y = opening / 1e6)) +
+  geom_point(alpha = .3) +
+  scale_y_continuous(
+    name = "Box Office Opening Weekend [in million $]",
+    labels = comma) +
+  theme_bw()
+
+```
+
+```{r table with top movies, eval = TRUE, echo = TRUE}
+
+d %>%
+  select(title, release, opening) %>%
+  arrange(desc(opening)) %>%
+  distinct() %>%
+  top_n(10, opening) %>%
+  kable(
+    caption = str_c("Top 10 movies (sample size = ", nrow(da), ")"),
+    format.args = list(big.mark = ",")
+    )
+
+```
+
+```{r plot bo distribution, eval = TRUE, echo = TRUE}
+
+d %>%
+  select(title, release, opening) %>%
+  distinct() %>%
+  ggplot(aes(x = as.numeric(title), y = opening / 1e6)) +
+  geom_area() +
+  scale_y_continuous(
+    name = "Box Office Opening Weekend [in million $]",
+    labels = comma) +
+  labs(x = "Films") +
+  theme_bw()
+
+```
+
+```{r plot clicks over time, eval = TRUE, echo = TRUE}
+
+d %>%
+  filter(
+    abs(t) < 366
+  ) %>%
+  ggplot(aes(x = t, y = views / 1e6, group = title)) +
+  geom_line(alpha = .1) +
+  scale_x_continuous(name = "Days since release") +
+  scale_y_continuous(name = "Wikipedia clicks [in million]") +
+  theme_bw()
+
+```
+
+```{r available clicks prior to release, eval = TRUE, echo = TRUE}
+
+d %>%
+  group_by(title) %>%
+  summarise(t = min(t)) %>%
+  arrange(desc(t)) %>%
+  top_n(10, t) %>%
+  kable(
+    caption = str_c(
+      "10 movies with the latest Wikipedia pages",
+      " (sample size = ", nrow(da),")"
+      ),
+    format.args = list(big.mark = ",")
+    )
+  
+d %>%
+  group_by(title) %>%
+  summarise(t = min(t)) %>%
+  arrange(t) %>%
+  mutate(cumulative = seq(n())/n()) %>%
+  ggplot(aes(x = t, y = cumulative)) +
+  geom_line() +
+  scale_x_continuous(name = "Days since release") +
+  scale_y_continuous(
+    name = str_c("Available titles (sample size = ", nrow(da), ")"),
+    labels = percent) +
+  theme_bw()
+
+```
+
+
+```{r plot bo wiki correlation, eval = TRUE, echo = TRUE, fig.height = 10}
+
+da %>%
+  gather(
+    tPredict, views, starts_with("v")
+  ) %>%
+  group_by(tPredict) %>%
+  summarise(
+    N = sum(!is.na(views)),
+    correlation = cor(views, opening, "pairwise.complete.obs")) %>%
+  mutate(tPredict = as.numeric(str_extract(tPredict, "[:digit:]{3}"))) %>%
+  rename(`days prior to release` = tPredict) %>%
+  kable(caption = "Available titles and correlations for prediction groups")
+
+da %>%
+  gather(
+    tPredict, views, starts_with("v")
+  ) %>% 
+  filter(!is.na(views)) %>%
+  ggplot(aes(x = views / 1e6, y = opening / 1e6)) +
+  geom_point(alpha = .2) +
+  facet_wrap(vars(tPredict), ncol = 2) +
+  scale_x_continuous(name = "Wikipedia clicks [in million]") +
+  scale_y_continuous(
+    name = "Box Office Opening Weekend [in million $]",
+    labels = comma) +
+  geom_smooth(method = "lm", se = F) +
+  theme_bw()
+
+```
+
+
+# Analysis
+
+I highly recommend the book *Statistical Rethinking* by @mcelreath2018. 
+
+$$opening \sim Poisson(\lambda)$$
+$$log(\lambda) = a_{i}$$
+$$a_{i} \sim Normal(\bar{a}, \sigma)$$
+$$\bar{a} \sim Normal(16, 1)$$
+$$sigma \sim Exponential(10)$$
+
+```{r priors}
+
+da %>%
+  ggplot(
+    aes(x = opening)) +
+  geom_density(aes(linetype = "data")) +
+  stat_function(
+    aes(linetype = "prior"),
+    fun = function(x) {dlnorm(x, 18, 1.5)}) +
+  scale_x_continuous(
+    labels = comma) +
+  scale_y_continuous(
+    breaks = NULL,
+    labels = NULL) +
+  scale_linetype_manual(values = c(3,1)) +
+  theme_bw()
+
+```
+
+
+
+```{stan output.var="m01", eval = FALSE}
+
+data{
+    int opening[454];
+    int title[454];
+}
+parameters{
+    vector[454] aTitle;
+    real aBar;
+    real<lower=0> sigma;
+}
+model{
+    vector[454] lambda;
+    sigma ~ exponential(1);
+    aBar ~ normal(16 ,1.5);
+    aTitle ~ normal(aBar ,sigma);
+    for (i in 1:454) {
+        lambda[i] = aTitle[title[i]];
+        lambda[i] = exp(lambda[i]);
+    }
+    opening ~ poisson( lambda );
+}
+generated quantities{
+    vector[454] log_lik;
+    vector[454] lambda;
+    for (i in 1:454) {
+        lambda[i] = aTitle[title[i]];
+        lambda[i] = exp(lambda[i]);
+    }
+    for (i in 1:454) log_lik[i] = poisson_lpmf(opening[i] | lambda[i]);
+}
+
+```
+>>>>>>> parent of e135361... - global knitr option
 
 This is a _sample_ book written in **Markdown**.
 To compile this example to PDF, you need XeLaTeX. You are recommended to install TinyTeX (which includes XeLaTeX): <https://yihui.org/tinytex/>.
