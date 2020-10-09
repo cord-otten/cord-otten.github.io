@@ -1,6 +1,6 @@
 ---
 title: "Cord Otten"
-date: "Spring 2020"
+date: "Fall 2020"
 output:
   html_document:
     # toc: true
@@ -11,6 +11,29 @@ editor_options:
 link-citations: true
 csl: apa.csl
 references:
+- id: clement2020  
+  type: article-journal
+  author:
+  - family: Clement
+    given: Michel
+  - family: Otten
+    given: Cord
+  - family: Seifert
+    given: Rouven
+  - family: Kleinen
+    given: Ole
+  - family: Houston
+    given: Mark B.
+  - family: Karniouchina
+    given: Ekaterina V.
+  - family: Heller
+    given: Christoph
+  issued:
+    year: 2020
+  title: "IDEA FORUM: the Impact of Subscription-based Video on Demand on
+   Traditional Distributors’ Value Chains and Business Models"
+  container-title: Journal of Media Economics
+  DOI: 10.1080/08997764.2020.1796687
 - id: otten2019  
   type: article-journal
   author:
@@ -22,17 +45,55 @@ references:
     given: Dominik
   issued:
     year: 2019
-  title: Sales estimations in the book industry – comparing management predictions
-    with market response models in the children’s book market
+  title: Sales Estimations in the Book Industry – Comparing Management
+   Predictions with Market Response Models in the Children’s Book Market
   container-title: Journal of Media Business Studies
   volume: 16
   issue: 4
   page: 249-274
   DOI: 10.1080/16522354.2019.1623436
-nocite: |
-  @otten2019
+- id: weinberg2020  
+  type: article-journal
+  author:
+  - family: Weinberg
+    given: Charles B.
+  - family: Otten
+    given: Cord
+  - family: Orbach
+    given: Barak
+  - family: McKenzie
+    given: Jordi
+  - family: Gil
+    given: Ricard
+  - family: Chisholm
+    given: Darlene C.
+  - family: Basuroy
+    given: Suman
+  issued:
+    year: 2020
+  title: Technological Change and Managerial Challenges in the Movie Theater
+   Industry
+  container-title: Journal of Cultural Economics
+  DOI: 10.1007/s10824-019-09374-z
+nocite: "@*"
 
 ---
+
+<style type="text/css">
+  body {
+    font-size: 24px;
+  }
+  h1.title {
+    font-size: 60px;
+  }
+  h1 {
+    font-size: 38px;
+  }
+  .references {
+    padding-left: 1.5em;
+    text-indent:-1.5em;
+  }
+</style>
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = T)
@@ -40,10 +101,14 @@ knitr::opts_chunk$set(echo = T)
 
 # Contact
 
-* mail@cordotten.com  
-* [UHH](https://www.bwl.uni-hamburg.de/mp/team/cord-otten.html)  
+* `r  icon::fa("envelope")` mail@cordotten.com  
+* `r  icon::fa("university")` [HBS - Hamburg Business School](https://www.bwl.uni-hamburg.de/mp/team/cord-otten.html)  
+* `r  icon::ai("orcid")` [ORCID 0000-0001-5684-215X](https://orcid.org/0000-0001-5684-215X)
+* `r  icon::fa("github")` [github](https://github.com/cord-otten)
+* `r  icon::fa("linkedin")` [linkedin](https://www.linkedin.com/in/cord-otten-54060741/)
+* `r  icon::fa("xing")` [XING](https://www.xing.com/profile/Cord_Otten/)
 
-# CV
+# Experience
 
 * since 2017: Research associate, [University of Hamburg](https://www.bwl.uni-hamburg.de/mp/)  
 * 2015-17: Research associate, [Kuehne Logistics University](https://www.the-klu.org/)  
