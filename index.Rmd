@@ -1,6 +1,6 @@
 ---
 title: "Cord Otten"
-date: "Fall 2020"
+# date: "Fall 2020"
 output:
   html_document:
     # toc: true
@@ -98,8 +98,6 @@ nocite: "@*"
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = T)
 ```
-
-# Contact
 
 * `r  icon::fa("envelope")` mail@cordotten.com  
 * `r  icon::fa("university")` [HBS - Hamburg Business School](https://www.bwl.uni-hamburg.de/mp/team/cord-otten.html)  
