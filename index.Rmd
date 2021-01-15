@@ -58,8 +58,6 @@ references:
   collection-title: Handbooks of Communication Science
   container-title: Management and Economics of Communication
   ISBN: 978-3-11-058954-2
-  language: en
-  note: 'DOI: 10.1515/9783110589542-015'
   page: 281-310
   publisher: De Gruyter Mouton
   source: www.degruyter.com
@@ -80,6 +78,7 @@ references:
     - - '2020'
       - 5
       - 18
+  DOI: 10.1515/9783110589542-015
 - id: weinberg2020  
   type: article-journal
   author:
