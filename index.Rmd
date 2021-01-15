@@ -52,6 +52,34 @@ references:
   issue: 4
   page: 249-274
   DOI: 10.1080/16522354.2019.1623436
+- id: seifert2020
+  type: chapter
+  collection-number: 30
+  collection-title: Handbooks of Communication Science
+  container-title: Management and Economics of Communication
+  ISBN: 978-3-11-058954-2
+  language: en
+  note: 'DOI: 10.1515/9783110589542-015'
+  page: 281-310
+  publisher: De Gruyter Mouton
+  source: www.degruyter.com
+  title: 15 Designing marketing models for media products
+  author:
+  - family: Seifert
+    given: Rouven
+  - family: Clement
+    given: Michel
+  - family: Otten
+    given: Cord
+  editor:
+  - family: Rimscha
+    given: M. Bjørn
+    non-dropping-particle: von
+  issued:
+    date-parts:
+    - - '2020'
+      - 5
+      - 18
 - id: weinberg2020  
   type: article-journal
   author:
