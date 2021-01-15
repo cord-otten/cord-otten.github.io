@@ -1,5 +1,7 @@
 ---
-title: "Cord Otten"
+title: |
+  ![](image.jpg "Cord Otten"){width=100% style="display: block; margin:0 auto" }
+  Cord Otten
 # date: "Fall 2020"
 output:
   html_document:
