@@ -134,7 +134,7 @@ knitr::opts_chunk$set(echo = T)
 * `r  icon::fa("linkedin")` [linkedin](https://www.linkedin.com/in/cord-otten-54060741/)
 * `r  icon::fa("xing")` [XING](https://www.xing.com/profile/Cord_Otten/)
 
-# Experience
+# Professional Experience
 
 * since 2017: Research associate, [University of Hamburg](https://www.bwl.uni-hamburg.de/mp/)  
 * 2015-17: Research associate, [Kuehne Logistics University](https://www.the-klu.org/)  
