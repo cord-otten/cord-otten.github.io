@@ -1,7 +1,7 @@
 ---
 title: |
   ![](image.jpg "Cord Otten"){width=100% style="display: block; margin:0 auto" }
-  Cord Otten
+  Dr. Cord Otten
 # date: "Fall 2020"
 output:
   html_document:
@@ -31,10 +31,13 @@ references:
   - family: Heller
     given: Christoph
   issued:
-    year: 2020
+    year: 2018
   title: "IDEA FORUM: the Impact of Subscription-based Video on Demand on
    Traditional Distributors’ Value Chains and Business Models"
   container-title: Journal of Media Economics
+  volume: 31
+  issue: 1-2
+  pages: 50-67
   DOI: 10.1080/08997764.2020.1796687
 - id: otten2019  
   type: article-journal
@@ -99,11 +102,14 @@ references:
   - family: Basuroy
     given: Suman
   issued:
-    year: 2020
+    year: 2021
   title: Technological Change and Managerial Challenges in the Movie Theater
    Industry
   container-title: Journal of Cultural Economics
   DOI: 10.1007/s10824-019-09374-z
+  volume: 45
+  issue: 2
+  pages: 239-262
 nocite: "@*"
 
 ---
@@ -125,15 +131,16 @@ nocite: "@*"
 </style>
 
 ```{r setup, include=FALSE}
+library(shiny)
 knitr::opts_chunk$set(echo = T)
 ```
 
-* `r  icon::fa("envelope")` mail@cordotten.com  
-* `r  icon::fa("university")` [HBS - Hamburg Business School](https://www.bwl.uni-hamburg.de/mp/team/cord-otten.html)  
-* `r  icon::ai("orcid")` [ORCID 0000-0001-5684-215X](https://orcid.org/0000-0001-5684-215X)
-* `r  icon::fa("github")` [github](https://github.com/cord-otten)
-* `r  icon::fa("linkedin")` [linkedin](https://www.linkedin.com/in/cord-otten-54060741/)
-* `r  icon::fa("xing")` [XING](https://www.xing.com/profile/Cord_Otten/)
+* `r  icon("envelope", "fa")` mail@cordotten.com  
+* `r  icon("university", "fa")` [HBS - Hamburg Business School](https://www.bwl.uni-hamburg.de/mp/team/cord-otten.html)  
+* `r  icon("orcid", "ai")` [ORCID 0000-0001-5684-215X](https://orcid.org/0000-0001-5684-215X)
+* `r  icon("github", "fa")` [github](https://github.com/cord-otten)
+* `r  icon("linkedin", "fa")` [linkedin](https://www.linkedin.com/in/cord-otten-54060741/)
+* `r  icon("xing", "fa")` [XING](https://www.xing.com/profile/Cord_Otten/)
 
 # Professional Experience
 
