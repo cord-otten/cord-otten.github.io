@@ -66,7 +66,7 @@ references:
   page: 281-310
   publisher: De Gruyter Mouton
   source: www.degruyter.com
-  title: 15 Designing marketing models for media products
+  title: 15 Designing Marketing Models for Media Products
   author:
   - family: Seifert
     given: Rouven
@@ -84,6 +84,27 @@ references:
       - 5
       - 18
   DOI: 10.1515/9783110589542-015
+- id: seifert2022  
+  type: article-journal
+  author:
+  - family: Seifert
+    given: Rouven
+  - family: Otten
+    given: Cord
+  - family: Clement
+    given: Michel
+  - family: Albers
+    given: Sönke
+  - family: Kleinen
+    given: Ole
+  issued:
+    year: 2022
+  title: Exclusivity Strategies for Digital Products Across Digital and Physical Markets
+  container-title: Journal of the Academy of Marketing Science
+  # volume: 
+  # issue: 
+  # page: 
+  DOI: 10.1007/s11747-022-00897-0
 - id: weinberg2020  
   type: article-journal
   author:
@@ -110,6 +131,16 @@ references:
   volume: 45
   issue: 2
   pages: 239-262
+- id: otten2021  
+  type: interview
+  author:
+  - family: Otten
+    given: Cord
+  issued:
+    year: 2021
+  title: Cultmarts Podcast Episode
+  DOI: 10.1007/s10824-019-09374-z
+  volume: 10
 nocite: "@*"
 
 ---
@@ -144,7 +175,8 @@ knitr::opts_chunk$set(echo = T)
 
 # Professional Experience
 
-* since 2017: Research associate, [University of Hamburg](https://www.bwl.uni-hamburg.de/mp/)  
+* 2021+: Post-Doc, [University of Hamburg](https://www.bwl.uni-hamburg.de/mp/)  
+* 2017-21: Research associate, [University of Hamburg](https://www.bwl.uni-hamburg.de/mp/)  
 * 2015-17: Research associate, [Kuehne Logistics University](https://www.the-klu.org/)  
 * 2011-14: Consultant, [Simon Kucher & Partners](https://www.simon-kucher.com/)  
 * 2009-11: M.Sc. International Business (Marketing-Finance), Maastricht University  
