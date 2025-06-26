@@ -1,0 +1,4 @@
+/* Hide main page title */
+.quarto-title-block {
+  display: none;
+}

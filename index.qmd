@@ -1,0 +1,29 @@
+---
+title: "Cord Otten"
+format:
+  html:
+    title-block: none
+    theme: slate
+    css: styles.css
+---
+
+```{r}
+#| label: init
+#| echo: false
+
+library(shiny)
+```
+
+![](PORTRAIT.png){fig-alt="Portrait of Cord Otten" fig-align="center" width="50%"}
+
+# Dr. Cord Otten
+
+# Contact
+
+-   `r icon("envelope", "fa")` [mail\@cordotten.com](mailto:mail@cordotten.com)\
+
+# About
+
+-   `r icon("university", "fa")` [University of Hamburg Business School](https://www.bwl.uni-hamburg.de/mp/team/cord-otten.html)
+-   `r icon("orcid", "ai")` [ORCID 0000-0001-5684-215X](https://orcid.org/0000-0001-5684-215X)
+-   `r icon("github", "fa")` [github](https://github.com/cord-otten)
