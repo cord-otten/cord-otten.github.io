@@ -2,3 +2,6 @@
 .quarto-title-block {
   display: none;
 }
+a {
+  text-decoration: none;
+}
