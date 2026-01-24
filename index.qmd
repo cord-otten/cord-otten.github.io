@@ -21,7 +21,7 @@ library(shiny)
 
 # Contact
 
-`r icon("envelope", "fa")` [mail\@cordotten.com](mailto:mail@cordotten.com)\
+`r icon("envelope", "fa")` [mail\@cord-otten.de](mailto:mail@cord-otten.de)\
 
 # About
 
